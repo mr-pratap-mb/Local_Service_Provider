@@ -1,12 +1,13 @@
 // src/pages/Login.jsx
 import React, { useState } from "react";
 import { supabase } from "../api/supabaseClient";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -19,41 +20,35 @@ export default function Login() {
       });
       if (error) throw error;
 
-      const user = data?.user;
+      // 🔹 Wait until Supabase confirms session
+      let user = data?.user;
       if (!user) {
-        alert("Login failed.");
-        setLoading(false);
-        return;
+        const { data: sessionData } = await supabase.auth.getUser();
+        user = sessionData?.user;
       }
 
-      if (!user.email_confirmed_at) {
-        await supabase.auth.signOut();
-        alert("Please verify your email before logging in.");
-        setLoading(false);
-        return;
-      }
+      // small delay to ensure session propagation
+      await new Promise((r) => setTimeout(r, 300));
 
-      const { data: profile } = await supabase
+      if (!user) throw new Error("Login session not established yet. Please retry.");
+
+      // 🔹 Fetch role to redirect
+      const { data: profile, error: profErr } = await supabase
         .from("profiles")
-        .select("id")
+        .select("role")
         .eq("id", user.id)
         .single();
 
-      if (!profile) {
-        const meta = user.user_metadata || {};
-        await supabase.from("profiles").insert([
-          {
-            id: user.id,
-            full_name: meta.full_name || "",
-            email: user.email,
-            role: meta.role || "user",
-          },
-        ]);
-      }
+      if (profErr) throw profErr;
 
-      alert("Login successful!");
-      window.location.href = "/";
+      // 🔹 Navigate based on role
+      if (profile?.role === "provider") {
+        navigate("/provider-dashboard");
+      } else {
+        navigate("/user-dashboard");
+      }
     } catch (err) {
+      console.error("Login error:", err);
       alert("Login failed: " + err.message);
     } finally {
       setLoading(false);
@@ -61,44 +56,40 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 p-6">
-      <div className="w-full max-w-md bg-white shadow-lg p-8 rounded-xl border border-gray-100">
-        <h2 className="text-2xl font-bold text-purple-700 text-center mb-6">
-          Login
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center text-purple-700 mb-6">
+          Login to Your Account
         </h2>
         <form onSubmit={handleLogin} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-purple-500"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-purple-500"
-            required
-          />
+          <div>
+            <label className="block text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full border rounded-md p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full border rounded-md p-2"
+            />
+          </div>
           <button
+            type="submit"
             disabled={loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg transition"
+            className="w-full bg-purple-600 text-white py-2 rounded-md hover:bg-purple-700 transition"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-        <p className="text-center text-gray-600 mt-4">
-          Don’t have an account?{" "}
-          <Link
-            to="/signup"
-            className="text-purple-600 hover:underline font-semibold"
-          >
-            Sign up here
-          </Link>
-        </p>
       </div>
     </div>
   );

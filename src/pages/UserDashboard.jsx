@@ -1,70 +1,81 @@
 // src/pages/UserDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { supabase } from "../api/supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 export default function UserDashboard() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    let channel;
-    async function init() {
-      const { data } = await supabase.auth.getUser();
-      const uid = data?.user?.id;
-      if (!uid) { setLoading(false); return; }
-      await fetchBookings(uid);
+    let mounted = true;
+    async function loadBookings() {
+      setLoading(true);
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) {
+        setBookings([]);
+        setLoading(false);
+        return;
+      }
 
-      channel = supabase
-        .channel('user-' + uid)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `user_id=eq.${uid}` }, () => {
-          fetchBookings(uid);
-        })
-        .subscribe();
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*, service:service_id ( title ), provider:provider_id ( full_name )")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        setBookings([]);
+      } else if (mounted) {
+        setBookings(data || []);
+      }
+      setLoading(false);
     }
-    init();
-    return () => { if (channel) supabase.removeChannel(channel); };
+
+    loadBookings();
+    return () => { mounted = false; };
   }, []);
 
-  async function fetchBookings(uid) {
-    const { data, error } = await supabase
-      .from("bookings")
-      .select(`
-        id, status, created_at,
-        services (title, hidden_details),
-        providers:provider_id (full_name, phone, email)
-      `)
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false });
+  async function cancelBooking(id) {
+    const confirmCancel = window.confirm("Do you really want to cancel this booking?");
+    if (!confirmCancel) return;
 
-    if (error) console.error(error);
-    else setBookings(data || []);
-    setLoading(false);
+    const { error } = await supabase
+      .from("bookings")
+      .update({ status: "cancelled" })
+      .eq("id", id);
+
+    if (error) alert("Cancel failed: " + error.message);
+    else setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b));
   }
 
-  if (loading) return <div className="p-10 text-purple-700">Loading your bookings...</div>;
-
   return (
-    <div className="p-10 max-w-4xl mx-auto">
-      <h2 className="text-3xl font-bold text-purple-700 mb-6">My Bookings</h2>
-      {bookings.length === 0 ? <p className="text-gray-600">You have no bookings yet.</p> : (
-        <div className="space-y-4">
-          {bookings.map(b => (
-            <div key={b.id} className="bg-white p-4 rounded shadow-sm">
-              <div className="font-semibold text-lg">{b.services?.title}</div>
-              <div className="text-sm text-gray-600">Booked: {new Date(b.created_at).toLocaleString()}</div>
-              <div className="mt-2">Status: <strong>{b.status}</strong></div>
-              {b.status === "accepted" && (
-                <div className="mt-2 text-green-700">
-                  Provider Contact: {b.providers?.phone ? (
-                    <a className="underline text-blue-600" href={`https://wa.me/${b.providers.phone}`} target="_blank" rel="noreferrer">{b.providers.phone}</a>
-                  ) : (b.providers?.email || "N/A")}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-6">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">Your Bookings</h2>
+        {loading ? <div className="p-4 bg-white rounded-lg shadow">Loading bookings...</div> :
+          bookings.length === 0 ? <div className="p-4 bg-white rounded-lg shadow text-gray-500">You haven't made any bookings yet.</div> :
+            <div className="space-y-4">
+              {bookings.map(b => (
+                <div key={b.id} className="bg-white p-4 rounded-lg shadow flex justify-between items-center">
+                  <div>
+                    <div className="font-semibold text-lg">{b.service?.title || 'Service'}</div>
+                    <div className="text-sm text-gray-600">Provider: {b.provider?.full_name || '—'}</div>
+                    <div className="text-sm text-gray-600">Scheduled: {new Date(b.scheduled_date).toLocaleString()}</div>
+                    <div className="text-sm">Status: <span className="font-medium">{b.status}</span></div>
+                  </div>
+                  <div className="flex gap-2">
+                    {b.status === 'pending' && <button onClick={() => cancelBooking(b.id)} className="px-3 py-1 rounded bg-red-500 text-white">Cancel</button>}
+                    <button onClick={() => navigate(`/services/${b.service_id}`)} className="px-3 py-1 rounded border">View</button>
+                  </div>
                 </div>
-              )}
-              {b.status === "rejected" && <div className="mt-2 text-red-600">Request rejected by provider</div>}
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+        }
+      </div>
     </div>
   );
 }
