@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 const Footer = () => {
   return (
     <footer className="bg-gray-800 border-t border-gray-700 mt-auto">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="responsive-container mobile-padding">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="responsive-grid">
           
           {/* About / Credits Section */}
           <div className="space-y-3">

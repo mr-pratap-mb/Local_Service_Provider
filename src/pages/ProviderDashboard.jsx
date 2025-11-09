@@ -105,13 +105,12 @@ export default function ProviderDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-6">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold mb-8 text-gray-800">Provider Dashboard</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-            <h3 className="text-xl font-semibold mb-4 text-gray-700">Your Services</h3>
+    <div className="flex-1 bg-gray-50 mobile-padding">
+      <div className="responsive-container">
+        <h2 className="responsive-text-2xl font-bold mb-4 md:mb-6 text-gray-800 mobile-text-center">Provider Dashboard</h2>
+        <div className="dashboard-grid">
+          <div className="responsive-card bg-white rounded-lg shadow-md border border-gray-100">
+            <h3 className="responsive-text-xl font-semibold mb-4 text-gray-700">Your Services</h3>
             {services.length === 0 ? (
               <div className="text-gray-500 text-center py-4">No services created yet.</div>
             ) : (
@@ -132,8 +131,8 @@ export default function ProviderDashboard() {
             </button>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-            <h3 className="text-xl font-semibold mb-4 text-gray-700">Booking Requests</h3>
+          <div className="responsive-card bg-white rounded-lg shadow-md border border-gray-100">
+            <h3 className="responsive-text-xl font-semibold mb-4 text-gray-700">Booking Requests</h3>
             {bookings.length === 0 ? (
               <div className="text-gray-500 text-center py-4">No bookings yet.</div>
             ) : (
@@ -151,16 +150,16 @@ export default function ProviderDashboard() {
                       <p className="text-sm text-gray-600">Message: {booking.anyMessage}</p>
                     )}
                     {booking.status === 'pending' && (
-                      <div className="mt-2 flex space-x-2">
+                      <div className="mt-2 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                         <button
                           onClick={() => updateBookingStatus(booking.id, 'accepted')}
-                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                          className="responsive-button bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
                         >
                           Accept
                         </button>
                         <button
                           onClick={() => updateBookingStatus(booking.id, 'cancelled')}
-                          className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                          className="responsive-button bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors"
                         >
                           Reject
                         </button>
@@ -169,7 +168,7 @@ export default function ProviderDashboard() {
                     {booking.status === 'accepted' && (
                       <button
                         onClick={() => updateBookingStatus(booking.id, 'completed')}
-                        className="mt-2 bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700"
+                        className="responsive-button mt-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 transition-colors"
                       >
                         Mark as Completed
                       </button>

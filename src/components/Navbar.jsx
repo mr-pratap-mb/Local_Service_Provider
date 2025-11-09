@@ -30,75 +30,176 @@ export default function Navbar() {
 
   return (
     <header className="bg-indigo-800 shadow-md sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-        <Link to="/" className="text-xl font-bold text-white">LocalService</Link>
-        <nav>
-          <ul className="flex space-x-4 items-center">
-            <li>
-              <Link to="/" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Home</Link>
-            </li>
-            <li>
-              <div className="relative group">
-                <Link to="/services" className="flex items-center text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">
-                  Services
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </Link>
-                <div className="absolute left-0 mt-0 w-48 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2 z-50">
-                  <div className="px-4 py-2 text-gray-900 font-medium text-sm">Filter by Category</div>
-                  <div className="border-t border-gray-100 my-2"></div>
-                  {categories.map(cat => (
-                    <Link 
-                      key={cat.id} 
-                      to={`/categories/${cat.id}`} 
-                      className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 text-sm"
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
+      <div className="responsive-container">
+        <div className="flex justify-between items-center py-3 md:py-4">
+          <Link to="/" className="text-lg md:text-xl font-bold text-white">LocalService</Link>
+          
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden text-white p-2"
+            onClick={() => setShowDropdown(!showDropdown)}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showDropdown ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+            </svg>
+          </button>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:block">
+            <ul className="flex space-x-2 lg:space-x-4 items-center">
+              <li>
+                <Link to="/" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-2 lg:px-3 py-1 transition-colors duration-200 text-sm lg:text-base">Home</Link>
+              </li>
+              <li>
+                <div className="relative group">
+                  <Link to="/services" className="flex items-center text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-2 lg:px-3 py-1 transition-colors duration-200 text-sm lg:text-base">
+                    Services
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 lg:h-4 lg:w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </Link>
+                  <div className="absolute left-0 mt-0 w-48 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2 z-50">
+                    <div className="px-4 py-2 text-gray-900 font-medium text-sm">Filter by Category</div>
+                    <div className="border-t border-gray-100 my-2"></div>
+                    {categories.map(cat => (
+                      <Link 
+                        key={cat.id} 
+                        to={`/categories/${cat.id}`} 
+                        className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 text-sm"
+                      >
+                        {cat.name}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
+              </li>
+              {user ? (
+                <>
+                  <li>
+                    {profile?.role === 'provider' ? (
+                      <Link to="/provider-dashboard" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-2 lg:px-3 py-1 transition-colors duration-200 text-sm lg:text-base">Dashboard</Link>
+                    ) : (
+                      <Link to="/user-dashboard" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-2 lg:px-3 py-1 transition-colors duration-200 text-sm lg:text-base">Dashboard</Link>
+                    )}
+                  </li>
+                  {profile?.role === 'provider' && (
+                    <li>
+                      <Link to="/addservice" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-2 lg:px-3 py-1 transition-colors duration-200 text-sm lg:text-base">Add Service</Link>
+                    </li>
+                  )}
+                  <li>
+                    <NotificationBell />
+                  </li>
+                  <li>
+                    <button 
+                      onClick={logout}
+                      className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-2 lg:px-3 py-1 transition-colors duration-200 text-sm lg:text-base"
+                    >
+                      Logout
+                    </button>
+                  </li>
+                  <li className="hidden lg:block">
+                    <span className="text-indigo-100 font-medium bg-white bg-opacity-20 border border-indigo-200 rounded-md px-2 lg:px-3 py-1 text-sm">
+                      {profile?.full_name || user.email}
+                    </span>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li><Link to="/login" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-2 lg:px-3 py-1 transition-colors duration-200 text-sm lg:text-base">Login</Link></li>
+                  <li><Link to="/signup" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-2 lg:px-3 py-1 transition-colors duration-200 text-sm lg:text-base">Sign Up</Link></li>
+                </>
+              )}
+            </ul>
+          </nav>
+        </div>
+
+        {/* Mobile Navigation Menu */}
+        {showDropdown && (
+          <div className="md:hidden bg-indigo-700 rounded-lg mt-2 mb-4 py-4 px-4 space-y-2">
+            <Link 
+              to="/" 
+              className="block text-white hover:bg-indigo-600 rounded-md px-3 py-2 transition-colors duration-200"
+              onClick={() => setShowDropdown(false)}
+            >
+              Home
+            </Link>
+            <Link 
+              to="/services" 
+              className="block text-white hover:bg-indigo-600 rounded-md px-3 py-2 transition-colors duration-200"
+              onClick={() => setShowDropdown(false)}
+            >
+              Services
+            </Link>
+            {categories.length > 0 && (
+              <div className="pl-4 space-y-1">
+                <div className="text-indigo-200 text-sm font-medium">Categories:</div>
+                {categories.slice(0, 5).map(cat => (
+                  <Link 
+                    key={cat.id} 
+                    to={`/categories/${cat.id}`} 
+                    className="block text-indigo-100 hover:bg-indigo-600 rounded-md px-3 py-1 text-sm transition-colors duration-200"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
               </div>
-            </li>
+            )}
             {user ? (
               <>
-                <li>
-                  {profile?.role === 'provider' ? (
-                    <Link to="/provider-dashboard" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Dashboard</Link>
-                  ) : (
-                    <Link to="/user-dashboard" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Dashboard</Link>
-                  )}
-                </li>
+                <Link 
+                  to={profile?.role === 'provider' ? "/provider-dashboard" : "/user-dashboard"} 
+                  className="block text-white hover:bg-indigo-600 rounded-md px-3 py-2 transition-colors duration-200"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Dashboard
+                </Link>
                 {profile?.role === 'provider' && (
-                  <li>
-                    <Link to="/addservice" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Add Service</Link>
-                  </li>
-                )}
-                <li>
-                  <NotificationBell />
-                </li>
-                <li>
-                  <button 
-                    onClick={logout}
-                    className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200"
+                  <Link 
+                    to="/addservice" 
+                    className="block text-white hover:bg-indigo-600 rounded-md px-3 py-2 transition-colors duration-200"
+                    onClick={() => setShowDropdown(false)}
                   >
-                    Logout
-                  </button>
-                </li>
-                <li>
-                  <span className="text-indigo-100 font-medium bg-white bg-opacity-20 border border-indigo-200 rounded-md px-3 py-1 hidden md:inline">
+                    Add Service
+                  </Link>
+                )}
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-indigo-100 text-sm">
                     {profile?.full_name || user.email}
                   </span>
-                </li>
+                  <NotificationBell />
+                </div>
+                <button 
+                  onClick={() => {
+                    logout();
+                    setShowDropdown(false);
+                  }}
+                  className="block w-full text-left text-white hover:bg-indigo-600 rounded-md px-3 py-2 transition-colors duration-200"
+                >
+                  Logout
+                </button>
               </>
             ) : (
               <>
-                <li><Link to="/login" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Login</Link></li>
-                <li><Link to="/signup" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Sign Up</Link></li>
+                <Link 
+                  to="/login" 
+                  className="block text-white hover:bg-indigo-600 rounded-md px-3 py-2 transition-colors duration-200"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Login
+                </Link>
+                <Link 
+                  to="/signup" 
+                  className="block text-white hover:bg-indigo-600 rounded-md px-3 py-2 transition-colors duration-200"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Sign Up
+                </Link>
               </>
             )}
-          </ul>
-        </nav>
+          </div>
+        )}
       </div>
     </header>
   );

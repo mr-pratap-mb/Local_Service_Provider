@@ -68,9 +68,9 @@ export default function Book() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-6">
-      <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Book Service</h2>
+    <div className="flex-1 bg-gray-50 mobile-padding">
+      <div className="responsive-form mx-auto bg-white mobile-padding md:p-8 rounded-lg shadow-md">
+        <h2 className="responsive-text-2xl font-bold mb-4 md:mb-6 text-gray-800 mobile-text-center">Book Service</h2>
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
             {error}
