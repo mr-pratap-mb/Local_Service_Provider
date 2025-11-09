@@ -70,8 +70,12 @@ export default function ProviderDashboard() {
         .eq('provider_id', user.id);
 
       if (error) {
-        console.error('Error updating booking status:', error);
-        alert(`Failed to update booking status: ${error.message}`);
+        if (error.code === '23503') {
+          alert('Cannot reject a booking that has already been accepted or completed.');
+        } else {
+          console.error('Error updating booking status:', error);
+          alert(`Failed to update booking status: ${error.message}`);
+        }
         return;
       }
       setBookings(prev => 
@@ -140,6 +144,12 @@ export default function ProviderDashboard() {
                     <p className="text-sm text-gray-600">User: {booking.user?.full_name || booking.user?.email || 'N/A'}</p>
                     <p className="text-sm text-gray-600">Date: {new Date(booking.scheduled_date).toLocaleString()}</p>
                     <p className="text-sm text-gray-600">Status: {booking.status}</p>
+                    {booking.detailedAddress && (
+                      <p className="text-sm text-gray-600">Detailed Address: {booking.detailedAddress}</p>
+                    )}
+                    {booking.anyMessage && (
+                      <p className="text-sm text-gray-600">Message: {booking.anyMessage}</p>
+                    )}
                     {booking.status === 'pending' && (
                       <div className="mt-2 flex space-x-2">
                         <button

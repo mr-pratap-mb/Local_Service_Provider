@@ -8,6 +8,8 @@ export default function Book() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [scheduledDate, setScheduledDate] = useState('');
+  const [detailedAddress, setDetailedAddress] = useState('');
+  const [anyMessage, setAnyMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -47,7 +49,8 @@ export default function Book() {
             scheduled_date: scheduledDate,
             status: 'pending',
             category_id: id, // Assuming category_id is same as service_id for simplicity, adjust if needed
-            notes: '' // Add if you have a notes field in form
+            detailedAddress: detailedAddress || '',
+            anyMessage: anyMessage || ''
           }
         ])
         .select();
@@ -88,12 +91,38 @@ export default function Book() {
               required
             />
           </div>
+          <div className="mb-4">
+            <label htmlFor="detailedAddress" className="block text-gray-700 font-medium mb-2">
+              Detailed Address (optional)
+            </label>
+            <input
+              type="text"
+              id="detailedAddress"
+              value={detailedAddress}
+              onChange={(e) => setDetailedAddress(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="Flat no., landmark, etc."
+            />
+          </div>
+          <div className="mb-4">
+            <label htmlFor="anyMessage" className="block text-gray-700 font-medium mb-2">
+              Message to Provider (optional)
+            </label>
+            <textarea
+              id="anyMessage"
+              value={anyMessage}
+              onChange={(e) => setAnyMessage(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="E.g., Please bring a ladder"
+              rows="3"
+            ></textarea>
+          </div>
           <button
             type="submit"
             disabled={loading}
             className={`w-full py-3 rounded-lg font-medium transition ${loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
           >
-            {loading ? 'Booking...' : 'Confirm Booking'}
+            {loading ? 'Booking...' : 'Book Now'}
           </button>
         </form>
       </div>

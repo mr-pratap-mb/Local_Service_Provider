@@ -69,6 +69,11 @@ export default function Navbar() {
                     <Link to="/user-dashboard" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Dashboard</Link>
                   )}
                 </li>
+                {profile?.role === 'provider' && (
+                  <li>
+                    <Link to="/addservice" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Add Service</Link>
+                  </li>
+                )}
                 <li>
                   <NotificationBell />
                 </li>

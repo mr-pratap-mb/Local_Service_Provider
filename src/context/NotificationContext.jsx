@@ -1,85 +1,80 @@
 // src/context/NotificationContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
+import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext();
 
 export const useNotifications = () => useContext(NotificationContext);
 
 export const NotificationProvider = ({ children }) => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch initial notifications
-    fetchNotifications();
+    if (user) {
+      // Fetch initial notifications for this user
+      const fetchNotifications = async () => {
+        try {
+          setLoading(true);
+          const { data, error } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('recipient_id', user.id)
+            .order('created_at', { ascending: false });
 
-    // Subscribe to real-time changes
-    const setupSubscription = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user?.id) return;
+          if (error) {
+            console.error('Error fetching notifications:', error);
+            return;
+          }
 
+          setNotifications(data || []);
+          setUnreadCount(data.filter(n => !n.read).length);
+        } catch (err) {
+          console.error('Unexpected error fetching notifications:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchNotifications();
+
+      // Subscribe to real-time changes for this user only
       const subscription = supabase
-        .channel('notifications')
+        .channel(`notifications:${user.id}`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
           table: 'notifications',
-          filter: `recipient_id=eq.${userData.user.id}`
+          filter: `recipient_id=eq.${user.id}`
         }, (payload) => {
-          console.log('New notification:', payload);
+          console.log('New notification received:', payload);
           setNotifications(prev => [payload.new, ...prev]);
           setUnreadCount(prev => prev + 1);
-          // Play notification sound
-          playNotificationSound();
+          // Play sound for new notification
+          const audio = new Audio('/notification.mp3');
+          audio.play().catch(err => console.error('Audio play error:', err));
         })
         .subscribe();
 
-      return subscription;
-    };
-
-    let subscription;
-    setupSubscription().then(sub => subscription = sub);
-
-    // Clean up subscription on unmount
-    return () => {
-      if (subscription) subscription.unsubscribe();
-    };
-  }, []);
-
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true);
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user?.id) return;
-
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('recipient_id', userData.user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read).length || 0);
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
-    } finally {
-      setLoading(false);
+      return () => subscription.unsubscribe();
     }
-  };
+  }, [user]);
 
-  const markAsRead = async (notificationId) => {
+  const markAsRead = async (id) => {
     try {
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('id', notificationId);
+        .eq('id', id)
+        .eq('recipient_id', user?.id);
 
       if (error) throw error;
+
       setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+        prev.map(notif => notif.id === id ? { ...notif, read: true } : notif)
       );
       setUnreadCount(prev => prev - 1);
     } catch (err) {
@@ -89,18 +84,16 @@ export const NotificationProvider = ({ children }) => {
 
   const markAllAsRead = async () => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user?.id) return;
-
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('recipient_id', userData.user.id)
+        .eq('recipient_id', user?.id)
         .eq('read', false);
 
       if (error) throw error;
+
       setNotifications(prev => 
-        prev.map(n => ({ ...n, read: true }))
+        prev.map(notif => ({ ...notif, read: true }))
       );
       setUnreadCount(0);
     } catch (err) {
@@ -108,21 +101,31 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  const playNotificationSound = () => {
-    // Simple browser notification sound
-    const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
-    audio.play().catch(err => console.error('Audio play error:', err));
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('recipient_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        return;
+      }
+
+      setNotifications(data || []);
+      setUnreadCount(data.filter(n => !n.read).length);
+    } catch (err) {
+      console.error('Unexpected error fetching notifications:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <NotificationContext.Provider value={{
-      notifications,
-      unreadCount,
-      loading,
-      markAsRead,
-      markAllAsRead,
-      fetchNotifications
-    }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, loading, markAsRead, markAllAsRead, fetchNotifications }}>
       {children}
     </NotificationContext.Provider>
   );
