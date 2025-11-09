@@ -2,7 +2,6 @@
 import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
 import Layout from './components/Layout';
 import { NotificationProvider } from "./context/NotificationContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -26,21 +25,22 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter basename="/Local_Service_Provider">
       <AuthProvider>
         <NotificationProvider>
-          <Navbar />
-          <Suspense fallback={<LoadingScreen message="Preparing app..." />}>
-            <Routes>
-              <Route path="/" element={<App />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/categories/:id" element={<CategoryDetail />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/services/:id" element={<ServiceDetail />} />
-              <Route path="/addservice" element={<AddService />} />
-              <Route path="/provider-dashboard" element={<ProviderDashboard />} />
-              <Route path="/user-dashboard" element={<UserDashboard />} />
-            </Routes>
-          </Suspense>
+          <Layout>
+            <Suspense fallback={<LoadingScreen message="Preparing app..." />}>
+              <Routes>
+                <Route path="/" element={<App />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/categories/:id" element={<CategoryDetail />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/services/:id" element={<ServiceDetail />} />
+                <Route path="/addservice" element={<AddService />} />
+                <Route path="/provider-dashboard" element={<ProviderDashboard />} />
+                <Route path="/user-dashboard" element={<UserDashboard />} />
+              </Routes>
+            </Suspense>
+          </Layout>
         </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>
