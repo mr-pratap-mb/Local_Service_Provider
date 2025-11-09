@@ -35,35 +35,62 @@ export default function ServiceDetail() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-10 px-6">
-      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow p-6">
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-purple-700 mb-2">
-              {service.title}
-            </h1>
-            <p className="text-gray-700 mb-2">{service.description}</p>
-            <p className="text-indigo-600 font-semibold mb-1">
-              ₹{service.price}
-            </p>
-            <p className="text-sm text-gray-500">
-              Provider: {service.provider?.full_name || "—"}
-            </p>
-          </div>
-
-          {/* ✅ Booking Form */}
-          <div className="w-full md:w-96 bg-gray-50 p-4 rounded-lg shadow-inner">
-            <h3 className="text-lg font-semibold text-purple-700 mb-2">
-              Book this Service
-            </h3>
-            <BookingForm
-              serviceId={service.id}
-              providerId={service.provider_id}
-              onBooked={() => {
-                alert("Booking created!");
-                navigate("/user-dashboard");
-              }}
-            />
+    <div className="min-h-screen bg-white py-10 px-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="grid md:grid-cols-2 gap-8 p-8">
+            <div>
+              <div className="h-80 bg-gray-100 rounded-xl overflow-hidden mb-6">
+                <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-full flex items-center justify-center">
+                  <span className="text-gray-500 font-medium">Service Image</span>
+                </div>
+              </div>
+              
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                {service.title}
+              </h1>
+              <p className="text-gray-700 mb-6">
+                {service.description}
+              </p>
+              
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-xl font-bold text-indigo-600">₹{service.price}</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-gray-600">{service.location || 'Multiple locations'}</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span className="text-gray-600">
+                    {service.provider?.full_name || 'Professional Provider'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Book this Service</h3>
+              <BookingForm
+                serviceId={service.id}
+                providerId={service.provider_id}
+                onBooked={() => {
+                  alert("Booking created!");
+                  navigate("/user-dashboard");
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>

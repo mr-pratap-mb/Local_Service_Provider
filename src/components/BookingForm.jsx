@@ -24,6 +24,9 @@ export default function BookingForm({ serviceId, providerId, onBooked }) {
             provider_id: providerId,
             service_id: serviceId,
             scheduled_date: dayjs(scheduledDate).toISOString(),
+            status: 'pending',
+            category_id: null,
+            notes: ''
           },
         ])
         .select()

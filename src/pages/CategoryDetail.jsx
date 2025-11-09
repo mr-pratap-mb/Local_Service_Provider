@@ -55,44 +55,72 @@ export default function CategoryDetail() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-10 px-6">
-      <h2 className="text-3xl font-bold text-purple-700 mb-8 text-center">
-        {category.name} Services
-      </h2>
-
-      {services.length === 0 ? (
-        <p className="text-center text-gray-600">
-          No services have been added yet.
-        </p>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {services.map((s) => (
-            <div
-              key={s.id}
-              className="bg-white shadow border border-gray-100 rounded-xl p-5 hover:shadow-lg transition flex flex-col justify-between"
-            >
-              <div>
-                <h3 className="text-lg font-bold text-purple-700">{s.title}</h3>
-                <p className="text-gray-600 mt-1">{s.description}</p>
-                <p className="text-gray-800 font-semibold mt-2">
-                  ₹{s.price} —{" "}
-                  <span className="text-gray-500 text-sm">
-                    {s.profiles?.full_name || "Unknown Provider"}
-                  </span>
-                </p>
-              </div>
-
-              {/* ✅ View Details Button */}
-              <Link
-                to={`/services/${s.id}`}
-                className="mt-4 inline-block text-center bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-              >
-                View Details
-              </Link>
-            </div>
-          ))}
+    <div className="min-h-screen bg-white py-10 px-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            {category.name} Services
+          </h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Browse and book professional {category.name.toLowerCase()} services near you
+          </p>
         </div>
-      )}
+        
+        {services.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+            <div className="text-2xl text-gray-500 mb-4">No services available yet</div>
+            <p className="text-gray-600 mb-6 max-w-lg mx-auto">
+              Be the first to offer {category.name.toLowerCase()} services in your area
+            </p>
+            <Link 
+              to="/add-service" 
+              className="inline-block bg-indigo-600 text-white py-3 px-8 rounded-lg font-medium hover:bg-indigo-700 transition"
+            >
+              List Your Service
+            </Link>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {services.map((s) => (
+              <div
+                key={s.id}
+                className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300"
+              >
+                <div className="h-48 bg-gray-100 overflow-hidden relative">
+                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-full flex items-center justify-center">
+                    <span className="text-gray-500 font-medium">Service Image</span>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-lg font-bold text-gray-900">{s.title}</h3>
+                    <span className="text-xl font-bold text-indigo-600">₹{s.price}</span>
+                  </div>
+                  
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {s.description}
+                  </p>
+                  
+                  <div className="flex items-center text-gray-500 text-sm mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    {s.profiles?.full_name || "Professional Provider"}
+                  </div>
+                  
+                  <Link
+                    to={`/services/${s.id}`}
+                    className="block w-full text-center bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition"
+                  >
+                    View Details
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Layout from './components/Layout';
 import { NotificationProvider } from "./context/NotificationContext";
 import { AuthProvider } from "./context/AuthContext";
 import LoadingScreen from "./components/LoadingScreen";
@@ -18,10 +19,11 @@ const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
 const AddService = lazy(() => import("./pages/AddService"));
 const ProviderDashboard = lazy(() => import("./pages/ProviderDashboard"));
 const UserDashboard = lazy(() => import("./pages/UserDashboard"));
+const Services = lazy(() => import("./pages/Services"));
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/Local_Service_Provider">
       <AuthProvider>
         <NotificationProvider>
           <Navbar />
@@ -32,6 +34,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="/login" element={<Login />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/categories/:id" element={<CategoryDetail />} />
+              <Route path="/services" element={<Services />} />
               <Route path="/services/:id" element={<ServiceDetail />} />
               <Route path="/addservice" element={<AddService />} />
               <Route path="/provider-dashboard" element={<ProviderDashboard />} />
