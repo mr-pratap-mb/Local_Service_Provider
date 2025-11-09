@@ -1,4 +1,4 @@
-import{a as u,r,s as d,j as e,L as c}from"./index-B2el1dBI.js";function p(){const{id:a}=u(),[t,x]=r.useState(null),[i,m]=r.useState([]),[g,l]=r.useState(!0);r.useEffect(()=>{h()},[a]);async function h(){try{l(!0);const{data:s,error:o}=await d.from("categories").select("id, name").eq("id",a).single();if(o)throw o;x(s);const{data:f,error:n}=await d.from("services").select(`
+import{a as u,r,s as d,j as e,L as c}from"./index-3smIfb5W.js";function p(){const{id:a}=u(),[t,x]=r.useState(null),[i,m]=r.useState([]),[g,l]=r.useState(!0);r.useEffect(()=>{h()},[a]);async function h(){try{l(!0);const{data:s,error:o}=await d.from("categories").select("id, name").eq("id",a).single();if(o)throw o;x(s);const{data:f,error:n}=await d.from("services").select(`
           id,
           title,
           description,
