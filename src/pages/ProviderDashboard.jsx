@@ -69,14 +69,18 @@ export default function ProviderDashboard() {
         .eq('id', bookingId)
         .eq('provider_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating booking status:', error);
+        alert(`Failed to update booking status: ${error.message}`);
+        return;
+      }
       setBookings(prev => 
         prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b)
       );
       alert(`Booking ${newStatus} successfully`);
     } catch (err) {
-      console.error('Error updating booking status:', err);
-      alert('Failed to update booking status');
+      console.error('Unexpected error updating booking status:', err);
+      alert('Failed to update booking status due to an unexpected error');
     }
   };
 

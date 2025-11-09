@@ -67,31 +67,35 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-6">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold mb-8 text-gray-800">User Dashboard</h2>
+    <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-800">Your Dashboard</h2>
 
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-          <h3 className="text-xl font-semibold mb-4 text-gray-700">Your Bookings</h3>
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-gray-100">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-700">Your Bookings</h3>
           {bookings.length === 0 ? (
-            <div className="text-gray-500 text-center py-4">No bookings yet.</div>
+            <div className="text-gray-500 text-center py-6">No bookings yet.</div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6">
               {bookings.map(booking => (
-                <div key={booking.id} className="border-b border-gray-100 pb-3">
-                  <h4 className="font-medium text-gray-900">{booking.service?.title || 'Service'}</h4>
-                  <p className="text-sm text-gray-600">Provider: {booking.provider?.full_name || booking.provider?.email || 'N/A'}</p>
-                  <p className="text-sm text-gray-600">Date: {new Date(booking.scheduled_date).toLocaleString()}</p>
-                  <p className={`text-sm font-medium ${booking.status === 'accepted' ? 'text-green-600' : booking.status === 'cancelled' ? 'text-red-600' : 'text-yellow-600'}`}>
-                    Status: {booking.status}
-                  </p>
+                <div key={booking.id} className="border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white hover:shadow-sm transition-shadow duration-200">
+                  <div className="mb-3 sm:mb-0 sm:flex-1">
+                    <h4 className="font-medium text-gray-900 text-base">{booking.service?.title || 'Service'}</h4>
+                    <p className="text-sm text-gray-600">Provider: {booking.provider?.full_name || booking.provider?.email || 'N/A'}</p>
+                    <p className="text-sm text-gray-600">Date: {new Date(booking.scheduled_date).toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${booking.status === 'accepted' ? 'bg-green-100 text-green-800' : booking.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
           )}
           <button
             onClick={() => window.location.href = '/services'}
-            className="mt-4 w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
+            className="mt-6 w-full sm:w-auto bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition"
           >
             Book a Service
           </button>

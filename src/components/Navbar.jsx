@@ -29,14 +29,17 @@ export default function Navbar() {
   }
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
+    <header className="bg-indigo-800 shadow-md sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-        <Link to="/" className="text-xl font-bold text-indigo-600">LocalService</Link>
+        <Link to="/" className="text-xl font-bold text-white">LocalService</Link>
         <nav>
-          <ul className="flex space-x-6 items-center">
+          <ul className="flex space-x-4 items-center">
+            <li>
+              <Link to="/" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Home</Link>
+            </li>
             <li>
               <div className="relative group">
-                <Link to="/services" className="flex items-center text-gray-600 hover:text-indigo-600 transition-colors duration-200">
+                <Link to="/services" className="flex items-center text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">
                   Services
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -61,9 +64,9 @@ export default function Navbar() {
               <>
                 <li>
                   {profile?.role === 'provider' ? (
-                    <Link to="/provider-dashboard" className="text-gray-600 hover:text-indigo-600">Dashboard</Link>
+                    <Link to="/provider-dashboard" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Dashboard</Link>
                   ) : (
-                    <Link to="/user-dashboard" className="text-gray-600 hover:text-indigo-600">Dashboard</Link>
+                    <Link to="/user-dashboard" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Dashboard</Link>
                   )}
                 </li>
                 <li>
@@ -72,19 +75,22 @@ export default function Navbar() {
                 <li>
                   <button 
                     onClick={logout}
-                    className="text-gray-600 hover:text-indigo-600"
+                    className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200"
                   >
                     Logout
                   </button>
                 </li>
                 <li>
-                  <span className="text-gray-600 text-sm">
+                  <span className="text-indigo-100 font-medium bg-white bg-opacity-20 border border-indigo-200 rounded-md px-3 py-1 hidden md:inline">
                     {profile?.full_name || user.email}
                   </span>
                 </li>
               </>
             ) : (
-              <li><Link to="/login" className="text-gray-600 hover:text-indigo-600">Login</Link></li>
+              <>
+                <li><Link to="/login" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Login</Link></li>
+                <li><Link to="/signup" className="text-white hover:bg-indigo-700 hover:bg-opacity-30 border border-transparent rounded-md px-3 py-1 transition-colors duration-200">Sign Up</Link></li>
+              </>
             )}
           </ul>
         </nav>
