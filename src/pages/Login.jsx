@@ -21,19 +21,19 @@ export default function Login() {
       });
       if (error) throw error;
 
-      // 🔹 Wait until Supabase confirms session
+      // Wait for session
       let user = data?.user;
       if (!user) {
         const { data: sessionData } = await supabase.auth.getUser();
         user = sessionData?.user;
       }
 
-      // small delay to ensure session propagation
+      // Small delay to ensure session propagation
       await new Promise((r) => setTimeout(r, 300));
 
       if (!user) throw new Error("Login session not established yet. Please retry.");
 
-      // 🔹 Fetch role to redirect
+      // Fetch role to redirect
       const { data: profile, error: profErr } = await supabase
         .from("profiles")
         .select("role")
@@ -42,7 +42,7 @@ export default function Login() {
 
       if (profErr) throw profErr;
 
-      // 🔹 Navigate based on role
+      // Navigate based on role
       if (profile?.role === "provider") {
         navigate("/provider-dashboard");
       } else {

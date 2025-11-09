@@ -1,156 +1,101 @@
-// src/pages/UserDashboard.jsx
-import React, { useEffect, useState } from "react";
-import { supabase } from "../api/supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { supabase } from '../api/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 export default function UserDashboard() {
+  const { user, profile } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    let mounted = true;
-    let channel = null;
-
-    async function loadBookings() {
-      setLoading(true);
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-      if (!userId) {
-        setBookings([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("*, service:service_id ( title ), provider:provider_id ( full_name, whatsapp_number, location, email, phone_number )")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error(error);
-        setBookings([]);
-      } else if (mounted) {
-        setBookings(data || []);
-      }
-      setLoading(false);
-
-      // Real-time listener for user bookings
-      channel = supabase
-        .channel(`user-bookings-${userId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "bookings",
-            filter: `user_id=eq.${userId}`,
-          },
-          (payload) => {
-            if (mounted) {
-              setBookings((prev) => {
-                const exists = prev.find((b) => b.id === payload.new.id);
-                if (payload.eventType === "INSERT") {
-                  return exists ? prev : [payload.new, ...prev];
-                }
-                if (payload.eventType === "UPDATE") {
-                  return prev.map((b) =>
-                    b.id === payload.new.id ? payload.new : b
-                  );
-                }
-                return prev;
-              });
-            }
-          }
-        )
-        .subscribe();
+    if (user) {
+      fetchDashboardData();
+      subscribeToBookings();
     }
+  }, [user]);
 
-    loadBookings();
-    return () => {
-      mounted = false;
-      if (channel) supabase.removeChannel(channel);
-    };
-  }, []);
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      // Fetch user's bookings
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('*, provider:provider_id(full_name, email), service:service_id(title)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-  async function cancelBooking(id) {
-    const confirmCancel = window.confirm("Do you really want to cancel this booking?");
-    if (!confirmCancel) return;
+      if (bookingsError) throw bookingsError;
+      setBookings(bookingsData || []);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: "cancelled" })
-      .eq("id", id);
+  const subscribeToBookings = () => {
+    const subscription = supabase
+      .channel(`user_bookings:${user.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'bookings',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        console.log('Booking update received:', payload);
+        fetchDashboardData(); // Refresh data on booking update
+      })
+      .subscribe();
 
-    if (error) alert("Cancel failed: " + error.message);
-    else setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b));
+    return () => subscription.unsubscribe();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-10 px-6 text-center">
+        <div className="text-gray-600 text-lg">Loading dashboard...</div>
+      </div>
+    );
+  }
+
+  if (!profile || profile.role !== 'user') {
+    return (
+      <div className="min-h-screen bg-gray-50 py-10 px-6 text-center">
+        <div className="text-red-600 text-lg">Access denied. User role required.</div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-white py-10 px-6">
+    <div className="min-h-screen bg-gray-50 py-10 px-6">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold text-gray-900 mb-8">Your Bookings</h2>
-        
-        {loading ? (
-          <div className="bg-white rounded-xl shadow p-6 text-center">
-            Loading bookings...
-          </div>
-        ) : bookings.length === 0 ? (
-          <div className="bg-white rounded-xl shadow p-6 text-center text-gray-500">
-            You haven't made any bookings yet
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {bookings.map(b => (
-              <div key={b.id} className="bg-white rounded-xl shadow overflow-hidden">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">{b.service?.title || 'Service'}</h3>
-                      <p className="text-gray-600 text-sm">Provider: {b.provider?.full_name || '—'}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${b.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : b.status === 'accepted' ? 'bg-blue-100 text-blue-800' : b.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {b.status}
-                    </span>
-                  </div>
-                  
-                  <div className="text-sm text-gray-600 mb-4">
-                    <div>Scheduled: {new Date(b.scheduled_date).toLocaleString()}</div>
-                  </div>
-                  
-                  {/* Show contact info when booking is accepted */}
-                  {b.status === 'accepted' && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <h4 className="font-medium text-gray-900 mb-2">Provider Contact Info</h4>
-                      <p className="text-sm text-gray-600">WhatsApp: {b.provider?.whatsapp_number || 'N/A'}</p>
-                      <p className="text-sm text-gray-600">Location: {b.provider?.location || 'N/A'}</p>
-                      <p className="text-sm text-gray-600">Email: {b.provider?.email || 'N/A'}</p>
-                      <p className="text-sm text-gray-600">Phone Number: {b.provider?.phone_number || 'N/A'}</p>
-                    </div>
-                  )}
-                  
-                  <div className="flex space-x-4">
-                    {b.status === 'pending' && (
-                      <button 
-                        onClick={() => cancelBooking(b.id)}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
-                      >
-                        Cancel Booking
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => navigate(`/services/${b.service_id}`)}
-                      className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition"
-                    >
-                      View Service
-                    </button>
-                  </div>
+        <h2 className="text-3xl font-bold mb-8 text-gray-800">User Dashboard</h2>
+
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+          <h3 className="text-xl font-semibold mb-4 text-gray-700">Your Bookings</h3>
+          {bookings.length === 0 ? (
+            <div className="text-gray-500 text-center py-4">No bookings yet.</div>
+          ) : (
+            <div className="space-y-4">
+              {bookings.map(booking => (
+                <div key={booking.id} className="border-b border-gray-100 pb-3">
+                  <h4 className="font-medium text-gray-900">{booking.service?.title || 'Service'}</h4>
+                  <p className="text-sm text-gray-600">Provider: {booking.provider?.full_name || booking.provider?.email || 'N/A'}</p>
+                  <p className="text-sm text-gray-600">Date: {new Date(booking.scheduled_date).toLocaleString()}</p>
+                  <p className={`text-sm font-medium ${booking.status === 'accepted' ? 'text-green-600' : booking.status === 'cancelled' ? 'text-red-600' : 'text-yellow-600'}`}>
+                    Status: {booking.status}
+                  </p>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => window.location.href = '/services'}
+            className="mt-4 w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
+          >
+            Book a Service
+          </button>
+        </div>
       </div>
     </div>
   );

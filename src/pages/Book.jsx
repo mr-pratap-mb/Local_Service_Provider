@@ -1,78 +1,101 @@
-// src/pages/Book.jsx
-import { useLocation, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { supabase } from '../api/supabaseClient'
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '../api/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 export default function Book() {
-  const { state } = useLocation()
-  const navigate = useNavigate()
-  const [notes, setNotes] = useState('')
-  const [msg, setMsg] = useState('')
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  if (!state) return <div className="p-6">No provider selected.</div>
-
-  const { providerId, providerName, categoryId } = state
-
-  async function handleBook(e) {
-    e.preventDefault()
-    const { data: userData } = await supabase.auth.getUser()
-    const user = userData?.user
-    if (!user) { setMsg('Please login to book.'); navigate('/login'); return }
-
-    const booking = {
-      user_id: user.id,
-      provider_id: providerId,
-      service_id: categoryId,
-      category_id: categoryId,
-      notes,
-      status: 'pending',
-      scheduled_date: new Date().toISOString()
+  const handleBooking = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!scheduledDate) {
+      setError('Please select a date and time for your booking.');
+      return;
     }
 
-    const { error } = await supabase.from('bookings').insert([booking])
-    if (error) setMsg('Booking failed: ' + error.message)
-    else {
-      setMsg('Booking request sent. Provider will be notified.')
-      setTimeout(() => navigate('/user-dashboard'), 1200)
+    try {
+      setLoading(true);
+      setError('');
+
+      // Fetch service to get provider_id
+      const { data: serviceData, error: serviceError } = await supabase
+        .from('services')
+        .select('provider_id, id')
+        .eq('id', id)
+        .single();
+
+      if (serviceError) throw serviceError;
+      if (!serviceData) throw new Error('Service not found');
+
+      // Insert booking
+      const { data, error } = await supabase
+        .from('bookings')
+        .insert([
+          {
+            user_id: user.id,
+            provider_id: serviceData.provider_id,
+            service_id: id,
+            scheduled_date: scheduledDate,
+            status: 'pending',
+            category_id: id, // Assuming category_id is same as service_id for simplicity, adjust if needed
+            notes: '' // Add if you have a notes field in form
+          }
+        ])
+        .select();
+
+      if (error) throw error;
+
+      alert('Booking successful! You will be notified when the provider responds.');
+      navigate('/user-dashboard');
+    } catch (err) {
+      console.error('Booking error:', err);
+      setError('Failed to create booking: ' + err.message);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-white py-10 px-6">
-      <div className="max-w-md mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Book {providerName}
-          </h2>
-          
-          <form onSubmit={handleBook} className="space-y-6">
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Notes for Provider (Optional)
-              </label>
-              <textarea 
-                value={notes} 
-                onChange={e => setNotes(e.target.value)}
-                placeholder="e.g. Please bring extra tools"
-                className="w-full border border-gray-200 rounded-lg p-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                rows="3"
-              />
-            </div>
-            
-            <button 
-              type="submit"
-              className="w-full bg-indigo-600 text-white py-4 rounded-lg font-bold hover:bg-indigo-700 transition"
-            >
-              Send Booking Request
-            </button>
-          </form>
-          
-          {msg && (
-            <div className={`mt-6 p-4 rounded-lg text-center ${msg.includes('failed') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-              {msg}
-            </div>
-          )}
-        </div>
+    <div className="min-h-screen bg-gray-50 py-10 px-6">
+      <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Book Service</h2>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleBooking}>
+          <div className="mb-4">
+            <label htmlFor="scheduledDate" className="block text-gray-700 font-medium mb-2">
+              Select Date and Time
+            </label>
+            <input
+              type="datetime-local"
+              id="scheduledDate"
+              value={scheduledDate}
+              onChange={(e) => setScheduledDate(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              min={new Date().toISOString().slice(0, 16)}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 rounded-lg font-medium transition ${loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+          >
+            {loading ? 'Booking...' : 'Confirm Booking'}
+          </button>
+        </form>
       </div>
     </div>
   );

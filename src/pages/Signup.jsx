@@ -32,33 +32,56 @@ export default function Signup() {
     e.preventDefault();
     setLoading(true);
     try {
-      // 1️⃣ Create Auth user
       const { data, error } = await supabase.auth.signUp({
         email,
-        password,
+        password
       });
       if (error) throw error;
 
       const user = data?.user;
       if (!user?.id) throw new Error("No user returned from signup");
 
-      // 2️⃣ Insert profile row
-      const { error: profErr } = await supabase.from("profiles").insert([
-        {
-          id: user.id,
-          full_name: fullName,
-          email: user.email,
-          role,
-          whatsapp_number: whatsappNumber,
-          location: location
-        },
-      ]);
-      if (profErr) throw profErr;
+      // Add small delay to ensure auth session propagation
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      alert("Signup successful! You can now log in.");
-      navigate("/login");
+      console.log('User ID from auth:', user.id);
+      console.log('Profile data being inserted:', {
+        id: user.id,
+        full_name: fullName,
+        role: role
+      });
+
+      // Check if profile already exists
+      const { data: existingProfile, error: checkError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') throw checkError;
+
+      if (existingProfile) {
+        alert("Profile already exists. Please log in.");
+        navigate("/login");
+      } else {
+        // Insert profile row
+        const { error: profErr } = await supabase.from("profiles").insert([
+          {
+            id: user.id,
+            full_name: fullName,
+            email: user.email,
+            role: role,  // Ensure this is 'provider' for providers
+            whatsapp_number: whatsappNumber,
+            location: location
+          },
+        ]);
+        if (profErr) throw profErr;
+
+        alert("Signup successful! You can now log in.");
+        navigate("/login");
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Signup error:", err);
       alert("Signup failed: " + err.message);
     } finally {
       setLoading(false);
