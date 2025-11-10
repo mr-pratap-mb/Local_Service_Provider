@@ -31,6 +31,12 @@ export default function AddService() {
         return;
       }
 
+      if (!categoryId) {
+        alert("Please select a category");
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.from("services").insert([
         {
           provider_id: user.id,
@@ -43,7 +49,8 @@ export default function AddService() {
       if (error) throw error;
 
       alert("Service added successfully!");
-      window.location.href = "/";
+      // Redirect to the provider dashboard to see the new service
+      window.location.href = `/provider-dashboard`;
     } catch (err) {
       alert("Failed: " + err.message);
     } finally {
@@ -52,10 +59,9 @@ export default function AddService() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-10 px-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Add a New Service</h2>
+    <div className="flex-1 bg-gray-50 mobile-padding">
+      <div className="responsive-form mx-auto bg-white mobile-padding md:p-8 rounded-lg shadow-md">
+        <h2 className="responsive-text-2xl font-bold mb-4 md:mb-6 text-gray-800 mobile-text-center">Add a New Service</h2>
           
           <form onSubmit={handleAdd} className="space-y-6">
             <div>
@@ -125,7 +131,6 @@ export default function AddService() {
               ) : "Add Service"}
             </button>
           </form>
-        </div>
       </div>
     </div>
   );

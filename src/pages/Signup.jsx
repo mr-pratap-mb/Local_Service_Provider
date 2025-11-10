@@ -1,10 +1,7 @@
-// src/pages/Signup.jsx
 import React, { useState } from "react";
 import { supabase } from "../api/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { LoadScript } from "@react-google-maps/api";
-import { Autocomplete } from "@react-google-maps/api";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -13,25 +10,57 @@ export default function Signup() {
   const [role, setRole] = useState("user");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [location, setLocation] = useState("");
-  const [autocomplete, setAutocomplete] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const onLoad = (autoC) => setAutocomplete(autoC);
-  
-  const onPlaceChanged = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace();
-      if (place.formatted_address) {
-        setLocation(place.formatted_address);
-      }
-    }
-  };
+  // List of disposable email domains
+  const disposableDomains = [
+    'yopmail.com', 'mailinator.com', 'tempmail.com', '10minutemail.com',
+    'guerrillamail.com', 'dispostable.com', 'fakeinbox.com', 'trashmail.com',
+    'example.com'
+  ];
 
   async function handleSignup(e) {
     e.preventDefault();
     setLoading(true);
+
+    // Validate email format
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      alert("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+
+    // Validate email domain
+    const emailDomain = email.split('@')[1];
+    if (disposableDomains.includes(emailDomain)) {
+      alert("Disposable email addresses are not allowed. Please use a permanent email address.");
+      setLoading(false);
+      return;
+    }
+
+    // Validate required fields
+    if (!fullName.trim()) {
+      alert("Please enter your full name.");
+      setLoading(false);
+      return;
+    }
+
+    if (!whatsappNumber.trim()) {
+      alert("Please enter your WhatsApp number.");
+      setLoading(false);
+      return;
+    }
+
+    if (!location.trim()) {
+      alert("Please enter your location.");
+      setLoading(false);
+      return;
+    }
+
     try {
+      // Step 1: Create auth user
       const { data, error } = await supabase.auth.signUp({
         email,
         password
@@ -41,45 +70,65 @@ export default function Signup() {
       const user = data?.user;
       if (!user?.id) throw new Error("No user returned from signup");
 
-      // Add small delay to ensure auth session propagation
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('User created:', user.id);
 
-      console.log('User ID from auth:', user.id);
-      console.log('Profile data being inserted:', {
-        id: user.id,
-        full_name: fullName,
-        role: role
-      });
+      // Wait for auth.users record to be fully committed
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
-      // Check if profile already exists
-      const { data: existingProfile, error: checkError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
+      // Step 2: Update profile with all fields
+      let retries = 10;
+      let delay = 500;
+      let profileCreated = false;
 
-      if (checkError && checkError.code !== 'PGRST116') throw checkError;
+      while (retries > 0 && !profileCreated) {
+        try {
+          console.log(`Attempting to update profile (attempt ${11 - retries}/10)`);
 
-      if (existingProfile) {
-        alert("Profile already exists. Please log in.");
-        navigate("/login");
-      } else {
-        // Insert profile row
-        const { error: profErr } = await supabase.from("profiles").insert([
-          {
-            id: user.id,
+          // Prepare complete profile data
+          const profileData = {
             full_name: fullName,
-            email: user.email,
-            role: role,  // Ensure this is 'provider' for providers
+            email: user.email || email,
+            role: role,
             whatsapp_number: whatsappNumber,
             location: location
-          },
-        ]);
-        if (profErr) throw profErr;
+          };
 
-        alert("Signup successful! You can now log in.");
-        navigate("/login");
+          console.log('Updating profile with data:', profileData);
+
+          // Update the profile that was auto-created by the trigger
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update(profileData)
+            .eq("id", user.id);
+
+          if (updateError) {
+            console.error('Profile update error:', updateError);
+            throw updateError;
+          }
+
+          console.log('Profile updated successfully with all fields');
+          profileCreated = true;
+
+        } catch (profileError) {
+          retries--;
+          console.error(`Profile operation failed (${10 - retries}/10):`, profileError);
+
+          if (retries === 0) {
+            console.warn('Profile update failed after all retries');
+            alert("Account created successfully! Please check your email for verification. You may need to complete your profile after logging in.");
+            navigate("/login");
+            return;
+          }
+
+          // Wait before retrying with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay = Math.min(delay * 1.5, 5000);
+        }
       }
+
+      alert("Signup successful! Please check your email for verification, then log in.");
+      navigate("/login");
+
     } catch (err) {
       console.error("Signup error:", err);
       alert("Signup failed: " + err.message);
@@ -95,7 +144,7 @@ export default function Signup() {
           <h2 className="text-3xl font-bold mb-2">Create an Account</h2>
           <p className="text-indigo-100">Join our community of service providers and users</p>
         </div>
-        
+
         <div className="p-8">
           <form onSubmit={handleSignup} className="space-y-6">
             <div>
@@ -109,7 +158,7 @@ export default function Signup() {
                 placeholder="John Doe"
               />
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2">Email</label>
               <input
@@ -119,9 +168,14 @@ export default function Signup() {
                 required
                 className="w-full border border-gray-200 rounded-lg p-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="you@example.com"
+                pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                title="Please enter a valid email address"
               />
+              {email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(email) && (
+                <p className="text-red-500 text-sm mt-1">Please enter a valid email address</p>
+              )}
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2">Password</label>
               <input
@@ -133,7 +187,7 @@ export default function Signup() {
                 placeholder="••••••••"
               />
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2">WhatsApp Number</label>
               <input
@@ -145,7 +199,7 @@ export default function Signup() {
                 placeholder="+91 9876543210"
               />
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2">Location</label>
               <input
@@ -157,7 +211,7 @@ export default function Signup() {
                 placeholder="Enter your address"
               />
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2">Account Type</label>
               <div className="grid grid-cols-2 gap-4">
@@ -177,7 +231,7 @@ export default function Signup() {
                 </button>
               </div>
             </div>
-            
+
             <button
               type="submit"
               disabled={loading}
@@ -194,7 +248,7 @@ export default function Signup() {
               ) : "Sign Up"}
             </button>
           </form>
-          
+
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Already have an account?{' '}

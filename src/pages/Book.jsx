@@ -31,7 +31,7 @@ export default function Book() {
       // Fetch service to get provider_id
       const { data: serviceData, error: serviceError } = await supabase
         .from('services')
-        .select('provider_id, id')
+        .select('provider_id, id, title')
         .eq('id', id)
         .single();
 
@@ -49,13 +49,33 @@ export default function Book() {
             scheduled_date: scheduledDate,
             status: 'pending',
             category_id: id, // Assuming category_id is same as service_id for simplicity, adjust if needed
-            detailedAddress: detailedAddress || '',
-            anyMessage: anyMessage || ''
+            detailedaddress: detailedAddress || '',
+            anymessage: anyMessage || ''
           }
         ])
         .select();
 
       if (error) throw error;
+
+      // Send notification to provider
+      if (data && data.length > 0) {
+        const booking = data[0];
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert([
+            {
+              recipient_id: serviceData.provider_id,
+              title: 'Booking Request',
+              content: `${user.full_name || 'A user'} has requested a booking for ${serviceData.title || 'your service'} scheduled on ${scheduledDate ? new Date(scheduledDate).toLocaleString() : 'N/A'}. New Booking Request ID: ${booking.id}`,
+              type: 'new_booking',
+              is_read: false
+            }
+          ]);
+
+        if (notificationError) {
+          console.error('Error sending notification to provider:', notificationError);
+        }
+      }
 
       alert('Booking successful! You will be notified when the provider responds.');
       navigate('/user-dashboard');
@@ -68,9 +88,9 @@ export default function Book() {
   };
 
   return (
-    <div className="flex-1 bg-gray-50 mobile-padding">
-      <div className="responsive-form mx-auto bg-white mobile-padding md:p-8 rounded-lg shadow-md">
-        <h2 className="responsive-text-2xl font-bold mb-4 md:mb-6 text-gray-800 mobile-text-center">Book Service</h2>
+    <div className="min-h-screen bg-gray-50 py-10 px-6">
+      <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Book Service</h2>
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
             {error}

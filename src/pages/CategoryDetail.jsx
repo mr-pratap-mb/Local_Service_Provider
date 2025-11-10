@@ -11,6 +11,14 @@ export default function CategoryDetail() {
 
   useEffect(() => {
     fetchCategoryAndServices();
+    subscribeToServices();
+    
+    return () => {
+      // Cleanup subscription
+      supabase
+        .channel(`services-${id}`)
+        .unsubscribe();
+    };
   }, [id]);
 
   async function fetchCategoryAndServices() {
@@ -32,19 +40,113 @@ export default function CategoryDetail() {
           title,
           description,
           price,
-          provider_id,
-          profiles(full_name)
+          provider_id
         `)
         .eq("category_id", id)
         .order("created_at", { ascending: false });
 
       if (svcErr) throw svcErr;
-      setServices(servicesData || []);
+      
+      // Fetch provider profiles for each service
+      if (servicesData && servicesData.length > 0) {
+        const providerIds = servicesData.map(s => s.provider_id);
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", providerIds);
+        
+        // Merge profiles with services
+        const servicesWithProfiles = servicesData.map(service => ({
+          ...service,
+          profiles: profilesData?.find(p => p.id === service.provider_id) || { full_name: "Professional Provider" }
+        }));
+        
+        setServices(servicesWithProfiles);
+      } else {
+        setServices(servicesData || []);
+      }
     } catch (err) {
       console.error("Error fetching:", err.message);
     } finally {
       setLoading(false);
     }
+  }
+
+  function subscribeToServices() {
+    const channel = supabase
+      .channel(`services-${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "services",
+          filter: `category_id=eq.${id}`,
+        },
+        async (payload) => {
+          if (payload.eventType === "INSERT") {
+            // Fetch the full service data with profile information
+            try {
+              const { data: newServiceData, error } = await supabase
+                .from("services")
+                .select("id, title, description, price, provider_id")
+                .eq("id", payload.new.id)
+                .single();
+              
+              if (!error && newServiceData) {
+                // Fetch provider profile
+                const { data: profileData } = await supabase
+                  .from("profiles")
+                  .select("id, full_name")
+                  .eq("id", newServiceData.provider_id)
+                  .single();
+                
+                const serviceWithProfile = {
+                  ...newServiceData,
+                  profiles: profileData || { full_name: "Professional Provider" }
+                };
+                
+                setServices((prev) => [serviceWithProfile, ...prev]);
+              }
+            } catch (err) {
+              console.error("Error fetching new service:", err);
+            }
+          } else if (payload.eventType === "UPDATE") {
+            // Fetch the updated service data with profile information
+            try {
+              const { data: updatedServiceData, error } = await supabase
+                .from("services")
+                .select("id, title, description, price, provider_id")
+                .eq("id", payload.new.id)
+                .single();
+              
+              if (!error && updatedServiceData) {
+                // Fetch provider profile
+                const { data: profileData } = await supabase
+                  .from("profiles")
+                  .select("id, full_name")
+                  .eq("id", updatedServiceData.provider_id)
+                  .single();
+                
+                const serviceWithProfile = {
+                  ...updatedServiceData,
+                  profiles: profileData || { full_name: "Professional Provider" }
+                };
+                
+                setServices((prev) =>
+                  prev.map((s) => (s.id === payload.new.id ? serviceWithProfile : s))
+                );
+              }
+            } catch (err) {
+              console.error("Error fetching updated service:", err);
+            }
+          } else if (payload.eventType === "DELETE") {
+            // Remove deleted service
+            setServices((prev) => prev.filter((s) => s.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
   }
 
   if (loading)
