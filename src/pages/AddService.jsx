@@ -1,6 +1,7 @@
 // src/pages/AddService.jsx
 import React, { useEffect, useState } from "react";
 import { supabase } from "../api/supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 export default function AddService() {
   const [title, setTitle] = useState("");
@@ -9,6 +10,7 @@ export default function AddService() {
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCategories();
@@ -27,7 +29,7 @@ export default function AddService() {
       const user = data?.user;
       if (!user) {
         alert("Please login to add a service.");
-        window.location.href = "/login";
+        navigate("/login");
         return;
       }
 
@@ -50,7 +52,7 @@ export default function AddService() {
 
       alert("Service added successfully!");
       // Redirect to the provider dashboard to see the new service
-      window.location.href = `/provider-dashboard`;
+      navigate('/provider-dashboard');
     } catch (err) {
       alert("Failed: " + err.message);
     } finally {
