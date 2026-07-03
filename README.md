@@ -1,18 +1,41 @@
+# Local Service Provider
+
+Local Service Provider is a full-stack web application built with React and Supabase that connects customers with local service professionals through a simple and responsive platform. It allows users to discover services, book appointments, and receive real-time booking updates, while enabling service providers to manage their services and customer requests from a dedicated dashboard.
+
+## Live Demo :  
+
 https://mr-pratap-mb.github.io/Local_Service_Provider/
 
-# React + Vite
+## About the Project
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The project was developed to simplify the process of finding reliable local service providers by bringing customers and professionals onto a single platform. Instead of relying on traditional methods such as phone calls or personal references, users can browse available services, submit booking requests with their preferred date and time, and track their booking status in real time. Service providers can efficiently manage requests, update their services, and respond to bookings through an intuitive dashboard.
 
-Currently, two official plugins are available:
+## Technology Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**Frontend:** React.js, Vite, Tailwind CSS
 
-## React Compiler
+**Backend:** Supabase
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Database:** PostgreSQL
 
-## Expanding the ESLint configuration
+**Authentication:** Supabase Auth
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**Realtime:** Supabase Realtime
+
+**Tools:** Git, GitHub, Visual Studio Code
+
+## Future Improvements
+
+- Google Maps integration for location-based service discovery
+- Online payment gateway support
+- Customer ratings and reviews
+- In-app messaging between users and providers
+- AI-powered service recommendations
+- Progressive Web App (PWA) support
+
+## Team
+
+- Pratap 
+- Preetam 
+- Shashank
+- Yogesh 
