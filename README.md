@@ -24,6 +24,19 @@ The project was developed to simplify the process of finding reliable local serv
 
 **Tools:** Git, GitHub, Visual Studio Code
 
+## Features
+
+- Secure authentication for both users and service providers using Supabase Authentication.
+- Role-based dashboards with separate interfaces for customers and service providers.
+- Browse and explore a variety of local services across multiple categories.
+- View detailed information about service providers before booking.
+- Book services by selecting a preferred date, time, address, and additional service details.
+- Manage bookings with real-time status updates, including Pending, Accepted, and Rejected states.
+- Provider dashboard to view, accept, or reject incoming booking requests.
+- Add and manage service listings with pricing and descriptions.
+- Real-time synchronization of booking requests and status updates using Supabase Realtime.
+- Responsive user interface optimized for desktop, tablet, and mobile devices.
+
 ## Future Improvements
 
 - Google Maps integration for location-based service discovery
